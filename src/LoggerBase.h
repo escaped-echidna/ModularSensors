@@ -6,6 +6,12 @@
  *Initial library developement done by Sara Damiano (sdamiano@stroudcenter.org).
  *
  *This file is for the basic logging functions - ie, saving to an SD card.
+ 
+
+ NOTE BY RACHEL:
+ 
+ CHANGED all timeZone integers to int16 so I can have two digit time zones
+ 
 */
 
 // Header Guards
@@ -190,15 +196,15 @@ protected:
 
 public:
     // Sets the static timezone - this must be set
-    static void setTimeZone(int8_t timeZone);
-    static int8_t getTimeZone(void) { return Logger::_timeZone; }
+    static void setTimeZone(int16_t timeZone);
+    static int16_t getTimeZone(void) { return Logger::_timeZone; }
 
     // This set the offset between the built-in clock and the time zone where
     // the data is being recorded.  If your RTC is set in UTC and your logging
     // timezone is EST, this should be -5.  If your RTC is set in EST and your
     // timezone is EST this does not need to be called.
-    static void setTZOffset(int8_t offset);
-    static int8_t getTZOffset(void) { return Logger::_offset; }
+    static void setTZOffset(int16_t offset);
+    static int16_t getTZOffset(void) { return Logger::_offset; }
 
     // This gets the current epoch time (unix time, ie, the number of seconds
     // from January 1, 1970 00:00:00 UTC) and corrects it for the specified time zone
@@ -237,8 +243,8 @@ public:
 
 protected:
     // Static variables - identical for EVERY logger
-    static int8_t _timeZone;
-    static int8_t _offset;
+    static int16_t _timeZone;
+    static int16_t _offset;
 
     // ============================================================================
     //  Public Functions for sleeping the logger
