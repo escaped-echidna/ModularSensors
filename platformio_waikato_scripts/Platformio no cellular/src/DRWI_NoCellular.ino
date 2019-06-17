@@ -32,11 +32,11 @@ const char *libraryVersion = "0.21.4";
 // The name of this file
 const char *sketchName = "DRWI_NoCellular.ino";
 // Logger ID, also becomes the prefix for the name of the data file on SD card
-const char *LoggerID = "180316";
+const char *LoggerID = "TBaisden_mayfly_1";
 // How frequently (in minutes) to log data
-const uint8_t loggingInterval = 1;
+const uint16_t loggingInterval = 1;
 // Your logger's timezone.
-const int8_t timeZone = 12;  // Eastern Standard Time
+const int16_t timeZone = 12;  // Eastern Standard Time
 // NOTE:  Daylight savings time will not be applied!  Please use standard time!
 
 
@@ -45,7 +45,7 @@ const int8_t timeZone = 12;  // Eastern Standard Time
 // ==========================================================================
 #include <sensors/ProcessorStats.h>
 
-const long serialBaud = 115200;   // Baud rate for the primary serial port for debugging
+const long serialBaud = 57600;   // Baud rate for the primary serial port for debugging
 const int8_t greenLED = 8;        // MCU pin for the green LED (-1 if not applicable)
 const int8_t redLED = 9;          // MCU pin for the red LED (-1 if not applicable)
 const int8_t buttonPin = 21;      // MCU pin for a button to use to enter debugging mode  (-1 if not applicable)
@@ -73,29 +73,29 @@ MaximDS3231 ds3231(1);
 // ==========================================================================
 //    CAMPBELL OBS 3 / OBS 3+ Analog Turbidity Sensor
 // ==========================================================================
-#include <sensors/CampbellOBS3.h>
+//#include <sensors/CampbellOBS3.h>
 
-const int8_t OBS3Power = sensorPowerPin;  // Pin to switch power on and off (-1 if unconnected)
-const uint8_t OBS3numberReadings = 10;
-const uint8_t ADSi2c_addr = 0x48;  // The I2C address of the ADS1115 ADC
+// const int8_t OBS3Power = sensorPowerPin;  // Pin to switch power on and off (-1 if unconnected)
+// const uint8_t OBS3numberReadings = 10;
+// const uint8_t ADSi2c_addr = 0x48;  // The I2C address of the ADS1115 ADC
 // Campbell OBS 3+ Low Range calibration in Volts
-const int8_t OBSLowADSChannel = 0;  // The ADS channel for the low range output
-const float OBSLow_A = 0.000E+00;  // The "A" value (X^2) from the low range calibration
-const float OBSLow_B = 1.000E+00;  // The "B" value (X) from the low range calibration
-const float OBSLow_C = 0.000E+00;  // The "C" value from the low range calibration
+// const int8_t OBSLowADSChannel = 0;  // The ADS channel for the low range output
+// const float OBSLow_A = 0.000E+00;  // The "A" value (X^2) from the low range calibration
+// const float OBSLow_B = 1.000E+00;  // The "B" value (X) from the low range calibration
+// const float OBSLow_C = 0.000E+00;  // The "C" value from the low range calibration
 
 // Create a Campbell OBS3+ LOW RANGE sensor object
-CampbellOBS3 osb3low(OBS3Power, OBSLowADSChannel, OBSLow_A, OBSLow_B, OBSLow_C, ADSi2c_addr, OBS3numberReadings);
+//CampbellOBS3 osb3low(OBS3Power, OBSLowADSChannel, OBSLow_A, OBSLow_B, OBSLow_C, ADSi2c_addr, OBS3numberReadings);
 
 
 // Campbell OBS 3+ High Range calibration in Volts
-const int8_t OBSHighADSChannel = 1;  // The ADS channel for the high range output
-const float OBSHigh_A = 0.000E+00;  // The "A" value (X^2) from the high range calibration
-const float OBSHigh_B = 1.000E+00;  // The "B" value (X) from the high range calibration
-const float OBSHigh_C = 0.000E+00;  // The "C" value from the high range calibration
+//const int8_t OBSHighADSChannel = 1;  // The ADS channel for the high range output
+//const float OBSHigh_A = 0.000E+00;  // The "A" value (X^2) from the high range calibration
+//const float OBSHigh_B = 1.000E+00;  // The "B" value (X) from the high range calibration
+//const float OBSHigh_C = 0.000E+00;  // The "C" value from the high range calibration
 
 // Create a Campbell OBS3+ HIGH RANGE sensor object
-CampbellOBS3 osb3high(OBS3Power, OBSHighADSChannel, OBSHigh_A, OBSHigh_B, OBSHigh_C, ADSi2c_addr, OBS3numberReadings);
+//CampbellOBS3 osb3high(OBS3Power, OBSHighADSChannel, OBSHigh_A, OBSHigh_B, OBSHigh_C, ADSi2c_addr, OBS3numberReadings);
 
 
 // ==========================================================================
@@ -121,8 +121,8 @@ Variable *variableList[] = {
     new DecagonCTD_Cond(&ctd, "12345678-abcd-1234-efgh-1234567890ab"),
     new DecagonCTD_Temp(&ctd, "12345678-abcd-1234-efgh-1234567890ab"),
     new DecagonCTD_Depth(&ctd, "12345678-abcd-1234-efgh-1234567890ab"),
-    new CampbellOBS3_Turbidity(&osb3low, "12345678-abcd-1234-efgh-1234567890ab", "TurbLow"),
-    new CampbellOBS3_Turbidity(&osb3high, "12345678-abcd-1234-efgh-1234567890ab", "TurbHigh"),
+   // new CampbellOBS3_Turbidity(&osb3low, "12345678-abcd-1234-efgh-1234567890ab", "TurbLow"),
+   // new CampbellOBS3_Turbidity(&osb3high, "12345678-abcd-1234-efgh-1234567890ab", "TurbHigh"),
     new ProcessorStats_Batt(&mcuBoard, "12345678-abcd-1234-efgh-1234567890ab"),
     new MaximDS3231_Temp(&ds3231, "12345678-abcd-1234-efgh-1234567890ab")
 };

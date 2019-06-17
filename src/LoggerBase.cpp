@@ -6,6 +6,12 @@
  *Initial library developement done by Sara Damiano (sdamiano@stroudcenter.org).
  *
  *This file is for the basic logging functions - ie, saving to an SD card.
+ 
+ RACHEL NOTE:
+ 
+ changed timeZone variables to be int16_t so time zone can be 2 decimals
+ 
+ 
 */
 
 #include "LoggerBase.h"
@@ -20,9 +26,9 @@
 
 
 // Initialize the static timezone
-int8_t Logger::_timeZone = 0;
+int16_t Logger::_timeZone = 0;
 // Initialize the static time adjustment
-int8_t Logger::_offset = 0;
+int16_t Logger::_offset = 0;
 // Initialize the static timestamps
 uint32_t Logger::markedEpochTime = 0;
 // Initialize the testing/logging flags
@@ -436,7 +442,7 @@ void Logger::sendDataToRemotes(void)
 // ===================================================================== //
 
 // Sets the static timezone - this must be set
-void Logger::setTimeZone(int8_t timeZone)
+void Logger::setTimeZone(int16_t timeZone)
 {
     _timeZone = timeZone;
     // Some helpful prints for debugging
@@ -453,7 +459,7 @@ void Logger::setTimeZone(int8_t timeZone)
 // the data is being recorded.  If your RTC is set in UTC and your logging
 // timezone is EST, this should be -5.  If your RTC is set in EST and your
 // timezone is EST this does not need to be called.
-void Logger::setTZOffset(int8_t offset)
+void Logger::setTZOffset(int16_t offset)
 {
     _offset = offset;
     // Some helpful prints for debugging
