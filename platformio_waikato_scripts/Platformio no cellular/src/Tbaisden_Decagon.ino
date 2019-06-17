@@ -1,4 +1,6 @@
 /*****************************************************************************
+Based off of:
+
 DRWI_NoCellular.ino
 Written By:  Sara Damiano (sdamiano@stroudcenter.org)
 Development Environment: PlatformIO
@@ -36,7 +38,7 @@ const char *LoggerID = "TBaisden_mayfly_1";
 // How frequently (in minutes) to log data
 const uint16_t loggingInterval = 1;
 // Your logger's timezone.
-const int16_t timeZone = 12;  // Eastern Standard Time
+const int16_t timeZone = 0;  // NZ time
 // NOTE:  Daylight savings time will not be applied!  Please use standard time!
 
 
