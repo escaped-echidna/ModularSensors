@@ -123,7 +123,7 @@ const int8_t SDI12Data = 7;  // The SDI12 data pin
 
 // Create and return the Decagon CTD sensor object
 DecagonCTD ctd(*CTDSDI12address, SDI12Power, SDI12Data, CTDnumberReadings);
-
+  
 
 // ==========================================================================
 //    Creating the Variable Array[s] and Filling with Variable Objects
@@ -246,7 +246,7 @@ void setup()
     // Begin the logger
     // Note:  Please change these battery voltages to match your battery
     // At lowest battery level, skip sensor set-up
-    if (getBatteryVoltage()< 3.4)
+    if (getBatteryVoltage()< 11.0)    //set for PS1270-12V7.0Ah battery 25/6/19 pj
     {
         dataLogger.begin(true);
     }
@@ -269,7 +269,8 @@ void loop()
 {
     // Note:  Please change these battery voltages to match your battery
     // At very low battery, just go back to sleep
-    if (getBatteryVoltage() < 3.4)
+   
+       if (getBatteryVoltage() < 11.0) //set for PS1270-12V7.0Ah battery 25/6/19 pj
     {
         dataLogger.systemSleep();
     }

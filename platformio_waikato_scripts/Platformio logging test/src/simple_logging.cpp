@@ -34,7 +34,7 @@ const char *LoggerID = "Mayfly1";
 // How frequently (in minutes) to log data
 const uint8_t loggingInterval = 5;
 // Your logger's timezone.
-const int8_t timeZone = 10;  // Eastern Standard Time
+const int8_t timeZone = -10;  // Eastern Standard Time
 // NOTE:  Daylight savings time will not be applied!  Please use standard time!
 
 
@@ -43,7 +43,7 @@ const int8_t timeZone = 10;  // Eastern Standard Time
 // ==========================================================================
 #include <sensors/ProcessorStats.h>
 
-const long serialBaud = 115200;   // Baud rate for the primary serial port for debugging
+const long serialBaud = 57600;   // Baud rate for the primary serial port for debugging
 const int8_t greenLED = 8;        // MCU pin for the green LED (-1 if not applicable)
 const int8_t redLED = 9;          // MCU pin for the red LED (-1 if not applicable)
 const int8_t buttonPin = 21;      // MCU pin for a button to use to enter debugging mode  (-1 if not applicable)

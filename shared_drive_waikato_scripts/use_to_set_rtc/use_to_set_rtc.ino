@@ -1,4 +1,4 @@
-// Date and time functions using a DS3231 RTC connected via I2C and Wire lib
+ // Date and time functions using a DS3231 RTC connected via I2C and Wire lib
 
 #include <Wire.h>
 #include "Sodaq_DS3231.h"
@@ -8,7 +8,7 @@ char weekDay[][4] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
 //year, month, date, hour, min, sec and week-day(starts from 0 and goes to 6)
 //writing any non-existent time-data may interfere with normal operation of the RTC.
 //Take care of week-day also.
-DateTime dt(2019, 06, 14, 12, 13, 0, 5);
+DateTime dt(2019, 06, 18, 12, 11, 0, 3);
 
 
 void setup ()
