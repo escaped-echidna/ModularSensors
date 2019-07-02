@@ -55,7 +55,7 @@ const uint8_t loggingInterval = 15; //set to 1 minute for testing pj
 const int8_t timeZone =12;  // Auckland :note timezone wont take 2 digit number pj 
 // NOTE:  Daylight savings time will not be applied!  Please use standard time!
 
-const float battery_minimum = 11.0; // minimum allowable battery voltage
+const float battery_minimum = 11.0; // minimum allowable battery voltage added 2/7/19 rm
                                     //set for PS1270-12V7.0Ah battery 25/6/19 pj
 
 // ==========================================================================
@@ -140,7 +140,8 @@ Variable *variableList[] = {
     new DecagonCTD_Depth(&ctd, "12345678-abcd-1234-efgh-1234567890ab"),
     //new CampbellOBS3_Turbidity(&osb3low, "12345678-abcd-1234-efgh-1234567890ab", "TurbLow"), //removed pj
     //new CampbellOBS3_Turbidity(&osb3high, "12345678-abcd-1234-efgh-1234567890ab", "TurbHigh"),//removed pj
-    new ProcessorStats_Batt(&mcuBoard, "12345678-abcd-1234-efgh-1234567890ab"),
+    new ProcessorStats_Battery(&mcuBoard, "12345678-abcd-1234-efgh-1234567890ab"), // changed ProcessorStats_Batt to 
+                                                                                   // ProcessorStats_Battery
     new MaximDS3231_Temp(&ds3231, "12345678-abcd-1234-efgh-1234567890ab")
 };
 // Count up the number of pointers in the array
@@ -216,7 +217,9 @@ void setup()
     if (String(MODULAR_SENSORS_VERSION) !=  String(libraryVersion))
         Serial.println(F(
             "WARNING: THIS EXAMPLE WAS WRITTEN FOR A DIFFERENT VERSION OF MODULAR SENSORS!!"));
-
+             Serial.println(F(
+            "(But don't be too worried, it works up to library version 0.22.6 -Rachel)"));
+                //added a line so people wouldn't worry too much about the warning
     // Set up pins for the LED's
     pinMode(greenLED, OUTPUT);
     digitalWrite(greenLED, LOW);
