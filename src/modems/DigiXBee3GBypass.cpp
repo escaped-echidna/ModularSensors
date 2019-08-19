@@ -20,7 +20,7 @@ DigiXBee3GBypass::DigiXBee3GBypass(Stream* modemStream,
   : DigiXBee(powerPin, statusPin, useCTSStatus,
              modemResetPin, modemSleepRqPin,
              measurementsToAverage),
-    #ifdef MS_DIGIXBEELTEBYPASS_DEBUG_DEEP
+    #ifdef MS_DIGIXBEE3GBYPASS_DEBUG_DEEP
     _modemATDebugger(*modemStream, DEEP_DEBUGGING_SERIAL_OUTPUT),
     gsmModem(_modemATDebugger),
     #else
@@ -68,6 +68,14 @@ bool DigiXBee3GBypass::extraModemSetup(void)
         // This can be used as proxy for status indication if the true status pin is not accessible
         // NOTE:  Only pin 12/DIO7/CTS can be used for this function
         gsmModem.sendAT(GF("D7"),1);
+        success &= gsmModem.waitResponse(GF("OK\r")) == 1;
+        // Turn on the associate LED (if you're using a board with one)
+        // NOTE:  Only pin 15/DIO5 can be used for this function
+        gsmModem.sendAT(GF("D5"),1);
+        success &= gsmModem.waitResponse(GF("OK\r")) == 1;
+        // Turn on the RSSI indicator LED (if you're using a board with one)
+        // NOTE:  Only pin 6/DIO10/PWM0 can be used for this function
+        gsmModem.sendAT(GF("P0"),1);
         success &= gsmModem.waitResponse(GF("OK\r")) == 1;
         // Put the XBee in pin sleep mode
         MS_DBG(F("Setting Sleep Options..."));
