@@ -144,15 +144,15 @@ const int8_t modemLEDPin = redLED;  // MCU pin connected an LED to show modem st
 // // NOTE:  The u-blox based Digi XBee's (3G global and LTE-M global)
 // // are more stable used in bypass mode (below)
 //  The Telit based Digi XBees (LTE Cat1) can only use this mode.
- #include <modems/DigiXBeeCellularTransparent.h>
+ #include <modems/DigiXBeeCellularTransparent_Rachel.h>
  const long modemBaud = 9600;  // All XBee's use 9600 by default
  const bool useCTSforStatus = true;   // Flag to use the modem CTS pin for status
-DigiXBeeCellularTransparent modemXBCT(&modemSerial,
+DigiXBeeCellularTransparent_Rachel modemXBCT(&modemSerial,
                                       modemVccPin, modemStatusPin, useCTSforStatus,
                                      modemResetPin, modemSleepRqPin,
                                    apn);
 // // Create an extra reference to the modem by a generic name (not necessary)
- DigiXBeeCellularTransparent modem = modemXBCT;
+ DigiXBeeCellularTransparent_Rachel modem = modemXBCT;
 
  // ==========================================================================
 

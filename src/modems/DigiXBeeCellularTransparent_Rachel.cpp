@@ -79,7 +79,7 @@ bool DigiXBeeCellularTransparent_Rachel::extraModemSetup(void)
         success &= gsmModem.waitResponse() == 1;
         // Put the XBee in pin sleep mode
         MS_DBG(F("Setting Sleep Options..."));
-        gsmModem.sendAT(GF("SM"),1);
+        gsmModem.sendAT(GF("SM"),0);
         success &= gsmModem.waitResponse() == 1;
         // Disassociate from network for lowest power deep sleep
         gsmModem.sendAT(GF("SO"),0);
