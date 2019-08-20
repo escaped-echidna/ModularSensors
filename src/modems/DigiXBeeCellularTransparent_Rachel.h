@@ -15,7 +15,7 @@
 
 // Debugging Statement
 #define DEBUGGING_SERIAL_OUTPUT Serial
-#define DEEP_DEBUGGING_SERIAL OUTPUT Serial
+#define DEEP_DEBUGGING_SERIAL_OUTPUT Serial
 #define MS_DIGIXBEECELLULARTRANSPARENT_DEBUG
 #define MS_DIGIXBEECELLULARTRANSPARENT_DEBUG_DEEP
 
@@ -76,4 +76,4 @@ private:
 
 };
 
-#endif  // Header Guard
+#endif  //Header Guard
