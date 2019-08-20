@@ -12,7 +12,7 @@
 #define DigiXBee_h
 
 // Debugging Statement
-// #define MS_DIGIXBEE_DEBUG
+#define MS_DIGIXBEE_DEBUG
 
 #ifdef MS_DIGIXBEE_DEBUG
 #define MS_DEBUGGING_STD "DigiXBee"
