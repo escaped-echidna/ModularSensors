@@ -11,8 +11,11 @@
 #ifndef DigiXBeeCellularTransparent_Rachel_h
 #define DigiXBeeCellularTransparent_Rachel_h
 
+
+
 // Debugging Statement
-// #define MS_DIGIXBEECELLULARTRANSPARENT_DEBUG
+#define DEBUGGING_SERIAL_OUTPUT Serial
+#define MS_DIGIXBEECELLULARTRANSPARENT_DEBUG
 // #define MS_DIGIXBEECELLULARTRANSPARENT_DEBUG_DEEP
 
 #ifdef MS_DIGIXBEECELLULARTRANSPARENT_DEBUG
