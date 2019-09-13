@@ -1,0 +1,80 @@
+{
+    "name": "TinyGSM", 
+    "version": "0.9.7", 
+    "description": "A small Arduino library for GPRS modules, that just works. Includes examples for Blynk, MQTT, File Download, and Web Client. Supports many GSM, LTE, and WiFi modules with AT command interfaces.", 
+    "keywords": [
+        "gsm", 
+        "at commands", 
+        "at", 
+        "sim800", 
+        "sim900", 
+        "a6", 
+        "a7", 
+        "m590", 
+        "esp8266", 
+        "sim7000", 
+        "sim800a", 
+        "sim800c", 
+        "sim800l", 
+        "sim800h", 
+        "sim808", 
+        "sim868", 
+        "sim900a", 
+        "sim900d", 
+        "sim908", 
+        "sim968", 
+        "m95", 
+        "mc60", 
+        "mc60e", 
+        "bg96", 
+        "ublox", 
+        "quectel", 
+        "simcom", 
+        "ai thinker", 
+        "lte", 
+        "lte-m"
+    ], 
+    "authors": [
+        {
+            "email": null, 
+            "url": "https://github.com/vshymanskyy", 
+            "maintainer": true, 
+            "name": "Volodymyr Shymanskyy"
+        }
+    ], 
+    "repository": {
+        "type": "git", 
+        "url": "https://github.com/vshymanskyy/TinyGSM.git"
+    }, 
+    "homepage": "https://github.com/vshymanskyy/TinyGSM", 
+    "export": {
+        "exclude": [
+            "extras/*", 
+            "tools/*"
+        ]
+    }, 
+    "frameworks": [
+        "arduino", 
+        "energia", 
+        "wiringpi"
+    ], 
+    "platforms": [
+        "atmelavr", 
+        "atmelsam", 
+        "espressif32", 
+        "espressif8266", 
+        "infineonxmc", 
+        "intel_arc32", 
+        "kendryte210", 
+        "linux_arm", 
+        "microchippic32", 
+        "nordicnrf51", 
+        "nordicnrf52", 
+        "ststm32", 
+        "ststm8", 
+        "teensy", 
+        "timsp430"
+    ], 
+    "examples": "examples/*/*.ino", 
+    "id": 1287
+}
