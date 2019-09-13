@@ -48,11 +48,12 @@ const char *sketchName = "logging_to_MMW_test.ino";
 // Logger ID, also becomes the prefix for the name of the data file on SD card
 const char *LoggerID = "IOWtest";
 // How frequently (in minutes) to log data
-const uint8_t loggingInterval = 5;
+const uint8_t loggingInterval = 15; // set to 15 minutes -rm
 // Your logger's timezone.
 const int8_t timeZone = 12;  // Eastern Standard Time
 // NOTE:  Daylight savings time will not be applied!  Please use standard time!
-
+float minimum_bat_voltage = 11.0; // defining minimum and moderate battery voltages
+float moderate_bat_voltage = 11.8; // -rm
 
 // ==========================================================================
 //    Primary Arduino-Based Board and Processor
@@ -142,6 +143,40 @@ const int8_t SDI12Data = 7;  // The SDI12 data pin
 // Create a Decagon CTD sensor object
 DecagonCTD ctd(*CTDSDI12address, SDI12Power, SDI12Data, CTDNumberReadings);
 
+
+// ==================================================================
+ // Analog battery voltage reading -rm
+// ==================================================================
+// mooched from Conrad's pump controller script
+
+float battery_multiplier = 1;
+
+float getBatteryVoltage(void)
+{
+    // read the input on analog pin 3: // checking voltage using analog input -rm
+    int sensorValue = 0 ;
+    float battery_voltage = 0 ;
+
+    sensorValue = analogRead(A3);
+    // Convert the analog reading (which goes from 0 - 1023) to a voltage (0 - 5V):
+    battery_voltage = sensorValue * battery_multiplier; //
+
+    return battery_voltage;
+}
+
+// Properties of the calculated variable
+const uint8_t calculatedVarResolution = 2;  // The number of digits after the decimal place
+const char *calculatedVarName = "batteryVoltage";  // This must be a value from http://vocabulary.odm2.org/variablename/
+const char *calculatedVarUnit = "Volt";  // This must be a value from http://vocabulary.odm2.org/units/
+const char *calculatedVarCode = "battVolt";  // A short code for the variable
+const char *calculatedVarUUID = "8952f24c-ea91-47d8-a555-ea54f4f7b876";  // The (optional) universallly unique identifier
+
+// Finally, Create a calculated variable pointer and return a variable pointer to it
+Variable *batteryVoltageVariable = new Variable(getBatteryVoltage, calculatedVarResolution,
+                                       calculatedVarName, calculatedVarUnit,
+                                       calculatedVarCode, calculatedVarUUID);
+
+
 // ==========================================================================
 //    Yosemitech Y4000 Multiparameter Sonde (DOmgL, Turbidity, Cond, pH, Temp, ORP, Chlorophyll, BGA)
 // ==========================================================================
@@ -195,8 +230,9 @@ Variable *variableList[] = {
     new DecagonCTD_Cond(&ctd, "6b3ef348-eb2d-4c94-8129-ee4559bb3217"), 
     new DecagonCTD_Temp(&ctd, "52f50dd5-b6b6-4975-ad61-55c5f864fd3e"),
     new DecagonCTD_Depth(&ctd, "d3eff5f5-92fe-4316-ae0f-75de31b0ce50"),
-    new ProcessorStats_Battery(&mcuBoard, "8d2a269f-0bce-4faa-b79f-7a19695f5bd2"),
+ //   new ProcessorStats_Battery(&mcuBoard, "8d2a269f-0bce-4faa-b79f-7a19695f5bd2"),
     new MaximDS3231_Temp(&ds3231, "c6bc39f6-04a1-4ba4-8f6d-10130ec291b6"),
+    batteryVoltageVariable,
 
 };
 
@@ -249,11 +285,12 @@ void greenredflash(uint8_t numFlash = 4, uint8_t rate = 75)
 
 // Read's the battery voltage
 // NOTE: This will actually return the battery level from the previous update!
-float getBatteryVoltage()
-{
-    if (mcuBoard.sensorValues[0] == -9999) mcuBoard.update();
-    return mcuBoard.sensorValues[0];
-}
+// I don't need this because I am using an analog pin to read the voltage -rm
+//float getBatteryVoltage()
+//{
+//    if (mcuBoard.sensorValues[0] == -9999) mcuBoard.update();
+//    return mcuBoard.sensorValues[0];
+//}
 
 
 // ==========================================================================
@@ -293,8 +330,6 @@ void setup()
     // Start the serial connection with the modem
     modemSerial.begin(modemBaud);
 
-    // Start the SoftwareSerial stream for the sonar; it will always be at 9600 baud
-   // sonarSerial.begin(9600);
 
     // Set up pins for the LED's
     pinMode(greenLED, OUTPUT);
@@ -324,9 +359,15 @@ void setup()
     // Begin the logger
     dataLogger.begin();
 
+   
+    Serial.print ("\t");
+    Serial.print ("current voltage = ");
+    Serial.println (getBatteryVoltage()); // check battery voltage -rm
+    Serial.print ("\t");
+
     // Note:  Please change these battery voltages to match your battery
     // Check that the battery is OK before powering the modem
-    if (getBatteryVoltage() > 3.65)
+    if (getBatteryVoltage() > minimum_bat_voltage)
     {
         modem.modemPowerUp();
         modem.wake();
@@ -346,7 +387,7 @@ void setup()
 
         // At very good battery voltage, or with suspicious time stamp, sync the clock
         // Note:  Please change these battery voltages to match your battery
-        if (getBatteryVoltage() > 3.8 ||
+        if (getBatteryVoltage() > moderate_bat_voltage || //changed to use new voltage input on analog 2 -rm
             dataLogger.getNowEpoch() < 1546300800 ||  /*Before 01/01/2019*/
             dataLogger.getNowEpoch() > 1735689600)  /*After 1/1/2025*/
         {
@@ -364,7 +405,7 @@ void setup()
     }
 
     // Set up the sensors, except at lowest battery level
-    if (getBatteryVoltage() > 3.4)
+    if (getBatteryVoltage() > minimum_bat_voltage)
     {
         Serial.println(F("Setting up sensors..."));
         varArray.setupSensors();
@@ -375,7 +416,7 @@ void setup()
     // all sensor names correct
     // Writing to the SD card can be power intensive, so if we're skipping
     // the sensor setup we'll skip this too.
-    if (getBatteryVoltage() > 3.4)
+    if (getBatteryVoltage() > minimum_bat_voltage)
     {
         Serial.println(F("Setting up file on SD card"));
         dataLogger.turnOnSDcard(true);  // true = wait for card to settle after power up
@@ -411,16 +452,25 @@ void setup()
 // /*
 void loop()
 {
+
+
+Serial.print ("\t");
+Serial.print ("current voltage = ");
+Serial.println (getBatteryVoltage());
+
+Serial.print ("\t");
+
     // Note:  Please change these battery voltages to match your battery
     // At very low battery, just go back to sleep
-    if (getBatteryVoltage() < 3.4)
+    if (getBatteryVoltage() < minimum_bat_voltage)
     {
         dataLogger.systemSleep();
     }
     // At moderate voltage, log data but don't send it over the modem
-    else if (getBatteryVoltage() < 3.65)
+    else if (getBatteryVoltage() < moderate_bat_voltage)
     {
         dataLogger.logData();
+       
     }
     // If the battery is good, send the data to the world
     else
