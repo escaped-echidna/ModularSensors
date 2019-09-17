@@ -48,12 +48,12 @@ const char *sketchName = "logging_to_MMW_test.ino";
 // Logger ID, also becomes the prefix for the name of the data file on SD card
 const char *LoggerID = "IOWtest";
 // How frequently (in minutes) to log data
-const uint8_t loggingInterval = 15; // set to 15 minutes -rm
+const uint8_t loggingInterval = 5; // set to 15 minutes -rm
 // Your logger's timezone.
 const int8_t timeZone = 12;  // Eastern Standard Time
 // NOTE:  Daylight savings time will not be applied!  Please use standard time!
-float minimum_bat_voltage = 11.0; // defining minimum and moderate battery voltages
-float moderate_bat_voltage = 11.8; // -rm
+float minimum_bat_voltage = 10.5; // defining minimum and moderate battery voltages
+float moderate_bat_voltage = 11.5; // -rm
 
 // ==========================================================================
 //    Primary Arduino-Based Board and Processor
@@ -149,63 +149,52 @@ DecagonCTD ctd(*CTDSDI12address, SDI12Power, SDI12Data, CTDNumberReadings);
 // ==================================================================
 // mooched from Conrad's pump controller script
 
-float battery_multiplier = 1;
+//float battery_multiplier = 1 ;
+//const int8_t extBatteryPin = A3 ;
 
-float getBatteryVoltage(void)
+float getBatteryVoltage(void) // setting battery voltage to 12 for now
 {
     // read the input on analog pin 3: // checking voltage using analog input -rm
-    int sensorValue = 0 ;
+    //int sensorValue = 0 ;
     float battery_voltage = 0 ;
 
-    sensorValue = analogRead(A3);
+    //sensorValue = analogRead(extBatteryPin);
     // Convert the analog reading (which goes from 0 - 1023) to a voltage (0 - 5V):
-    battery_voltage = sensorValue * battery_multiplier; //
+    battery_voltage = 12.0 ; //
 
     return battery_voltage;
 }
-
-// Properties of the calculated variable
-const uint8_t calculatedVarResolution = 2;  // The number of digits after the decimal place
-const char *calculatedVarName = "batteryVoltage";  // This must be a value from http://vocabulary.odm2.org/variablename/
-const char *calculatedVarUnit = "Volt";  // This must be a value from http://vocabulary.odm2.org/units/
-const char *calculatedVarCode = "battVolt";  // A short code for the variable
-const char *calculatedVarUUID = "8952f24c-ea91-47d8-a555-ea54f4f7b876";  // The (optional) universallly unique identifier
-
-// Finally, Create a calculated variable pointer and return a variable pointer to it
-Variable *batteryVoltageVariable = new Variable(getBatteryVoltage, calculatedVarResolution,
-                                       calculatedVarName, calculatedVarUnit,
-                                       calculatedVarCode, calculatedVarUUID);
 
 
 // ==========================================================================
 //    Yosemitech Y4000 Multiparameter Sonde (DOmgL, Turbidity, Cond, pH, Temp, ORP, Chlorophyll, BGA)
 // ==========================================================================
 
-//#include <AltSoftSerial.h>
-//AltSoftSerial altSoftSerial;
-//#include <sensors/YosemitechY4000.h>
+#include <AltSoftSerial.h>
+AltSoftSerial altSoftSerial;
+#include <sensors/YosemitechY4000.h>
 
 // Create a reference to the serial port for modbus
 // Extra hardware and software serial ports are created in the "Settings for Additional Serial Ports" section
-// #if defined ARDUINO_ARCH_SAMD || defined ATMEGA2560
-// HardwareSerial &modbusSerial = Serial2;  // Use hardware serial if possible
-// #else
-// AltSoftSerial &modbusSerial = altSoftSerial;  // For software serial if needed
-// // NeoSWSerial &modbusSerial = neoSSerial1;  // For software serial if needed
-// #endif
+ #if defined ARDUINO_ARCH_SAMD || defined ATMEGA2560
+ HardwareSerial &modbusSerial = Serial2;  // Use hardware serial if possible
+ #else
+ AltSoftSerial &modbusSerial = altSoftSerial;  // For software serial if needed
+ // NeoSWSerial &modbusSerial = neoSSerial1;  // For software serial if needed
+ #endif
 
-// byte y4000ModbusAddress = 0x01;  // The modbus address of the Y4000
-// const int8_t rs485AdapterPower = sensorPowerPin;  // Pin to switch RS485 adapter power on and off (-1 if unconnected)
-// const int8_t modbusSensorPower = A3;  // Pin to switch sensor power on and off (-1 if unconnected)
-// const int8_t max485EnablePin = -1;  // Pin connected to the RE/DE on the 485 chip (-1 if unconnected)
-// const uint8_t y4000NumberReadings = 5;  // The manufacturer recommends averaging 10 readings, but we take 5 to minimize power consumption
+ byte y4000ModbusAddress = 0x01;  // The modbus address of the Y4000
+ const int8_t rs485AdapterPower = sensorPowerPin;  // Pin to switch RS485 adapter power on and off (-1 if unconnected)
+ const int8_t modbusSensorPower = -1;  // Pin to switch sensor power on and off (-1 if unconnected) // changed to 22 -rm
+ const int8_t max485EnablePin = -1;  // Pin connected to the RE/DE on the 485 chip (-1 if unconnected)
+ const uint8_t y4000NumberReadings = 5;  // The manufacturer recommends averaging 10 readings, but we take 5 to minimize power consumption
 
 // Create a Yosemitech Y4000 multi-parameter sensor object
-//YosemitechY4000 y4000(y4000ModbusAddress, modbusSerial, rs485AdapterPower, modbusSensorPower, max485EnablePin, y4000NumberReadings);
+YosemitechY4000 y4000(y4000ModbusAddress, modbusSerial, rs485AdapterPower, modbusSensorPower, max485EnablePin, y4000NumberReadings);
 
 // Create all of the variable pointers for the Y4000
 
- //Variable *y4000DO = new YosemitechY4000_DOmgL(&y4000, "48589f6a-046c-48f4-84ef-3eb25ad07702")
+// Variable *y4000DO = new YosemitechY4000_DOmgL(&y4000, "48589f6a-046c-48f4-84ef-3eb25ad07702")
 // Variable *y4000Turb = new YosemitechY4000_Turbidity(&y4000, "46daf79d-3cd6-43b2-b8b2-dbcdce1e4c1c"),
 // Variable *y4000Cond = new YosemitechY4000_Cond(&y4000, "2dab997c-0d38-4b0f-9116-43e27893feaf"),
 // Variable *y4000pH = new YosemitechY4000_pH(&y4000, "47924fae-46ad-4fc6-99c4-d5bd629f6747"),
@@ -222,18 +211,16 @@ Variable *batteryVoltageVariable = new Variable(getBatteryVoltage, calculatedVar
 // at the same time putting them into an array
 // NOTE:  Forms one and two can be mixed
 Variable *variableList[] = {
- //   new YosemitechY4000_DOmgL(&y4000, "48589f6a-046c-48f4-84ef-3eb25ad07702"),
- //   new YosemitechY4000_Turbidity(&y4000, "46daf79d-3cd6-43b2-b8b2-dbcdce1e4c1c"),
- //   new YosemitechY4000_Cond(&y4000, "2dab997c-0d38-4b0f-9116-43e27893feaf"),
- //   new YosemitechY4000_pH(&y4000, "47924fae-46ad-4fc6-99c4-d5bd629f6747"),
- //   new YosemitechY4000_Temp(&y4000, "9ed4d2a1-492c-4ae4-bd69-22dcd429c526"),
-    new DecagonCTD_Cond(&ctd, "6b3ef348-eb2d-4c94-8129-ee4559bb3217"), 
-    new DecagonCTD_Temp(&ctd, "52f50dd5-b6b6-4975-ad61-55c5f864fd3e"),
-    new DecagonCTD_Depth(&ctd, "d3eff5f5-92fe-4316-ae0f-75de31b0ce50"),
+    new YosemitechY4000_DOmgL(&y4000, "48589f6a-046c-48f4-84ef-3eb25ad07702"),
+    new YosemitechY4000_Turbidity(&y4000, "46daf79d-3cd6-43b2-b8b2-dbcdce1e4c1c"),
+    new YosemitechY4000_Cond(&y4000, "2dab997c-0d38-4b0f-9116-43e27893feaf"),
+    new YosemitechY4000_pH(&y4000, "47924fae-46ad-4fc6-99c4-d5bd629f6747"),
+    new YosemitechY4000_Temp(&y4000, "9ed4d2a1-492c-4ae4-bd69-22dcd429c526"),
+  //  new DecagonCTD_Cond(&ctd, "6b3ef348-eb2d-4c94-8129-ee4559bb3217"), 
+  //  new DecagonCTD_Temp(&ctd, "52f50dd5-b6b6-4975-ad61-55c5f864fd3e"),
+ //   new DecagonCTD_Depth(&ctd, "d3eff5f5-92fe-4316-ae0f-75de31b0ce50"),
  //   new ProcessorStats_Battery(&mcuBoard, "8d2a269f-0bce-4faa-b79f-7a19695f5bd2"),
     new MaximDS3231_Temp(&ds3231, "c6bc39f6-04a1-4ba4-8f6d-10130ec291b6"),
-    batteryVoltageVariable,
-
 };
 
 // Count up the number of pointers in the array
@@ -360,10 +347,8 @@ void setup()
     dataLogger.begin();
 
    
-    Serial.print ("\t");
     Serial.print ("current voltage = ");
     Serial.println (getBatteryVoltage()); // check battery voltage -rm
-    Serial.print ("\t");
 
     // Note:  Please change these battery voltages to match your battery
     // Check that the battery is OK before powering the modem
@@ -453,12 +438,8 @@ void setup()
 void loop()
 {
 
-
-Serial.print ("\t");
 Serial.print ("current voltage = ");
 Serial.println (getBatteryVoltage());
-
-Serial.print ("\t");
 
     // Note:  Please change these battery voltages to match your battery
     // At very low battery, just go back to sleep
