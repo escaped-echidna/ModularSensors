@@ -36,7 +36,7 @@ const char *sketchName = "yosemitech_4000_with_wifibee.ino";
 // Logger ID, also becomes the prefix for the name of the data file on SD card
 const char *LoggerID = "Uowtest(UOW_test_1)";
 // How frequently (in minutes) to log data
-const uint8_t loggingInterval = 1; // set to 15 for testing -rm
+const uint8_t loggingInterval = 5; // set to 15 for testing -rm
 // Your logger's timezone.
 const int8_t timeZone = 12;  // Set to Auckland -rm
 // NOTE:  Daylight savings time will not be applied!  Please use standard time!
