@@ -96,12 +96,13 @@ AltSoftSerial altSoftSerial;
 // with several other libraries used within this program, we must use a
 // version of software serial that has been stripped of interrupts.
 // NOTE:  Only use if necessary.  This is not a very accurate serial port!
-
+/*
 const int8_t softSerialRx = 10;     // data in pin // changed from A3 -rm
 const int8_t softSerialTx = 11;     // data out pin // changed from A4 -rm
 
 #include <SoftwareSerial_ExtInts.h>  // for the stream communication
 SoftwareSerial_ExtInts softSerial1(softSerialRx, softSerialTx);
+*/
 
 // ==========================================================================
 //    Wifi/Cellular Modem 

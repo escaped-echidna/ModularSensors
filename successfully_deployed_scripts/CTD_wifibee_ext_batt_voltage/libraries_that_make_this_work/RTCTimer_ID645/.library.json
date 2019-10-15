@@ -1,0 +1,51 @@
+{
+    "name": "RTCTimer", 
+    "version": "1.0.0", 
+    "keywords": [
+        "timing"
+    ], 
+    "description": "An Arduino library to easily perform scheduled tasks.", 
+    "frameworks": [
+        "arduino"
+    ], 
+    "platforms": [
+        "atmelavr"
+    ], 
+    "authors": [
+        {
+            "email": null, 
+            "url": null, 
+            "maintainer": false, 
+            "name": "keestux"
+        }, 
+        {
+            "email": null, 
+            "url": null, 
+            "maintainer": false, 
+            "name": "SODAQ"
+        }, 
+        {
+            "email": "kees@m2m4all.com", 
+            "url": null, 
+            "maintainer": true, 
+            "name": "Kees Bakker"
+        }
+    ], 
+    "repository": {
+        "type": "git", 
+        "url": "https://github.com/SodaqMoja/RTCTimer"
+    }, 
+    "homepage": null, 
+    "export": {
+        "include": null, 
+        "exclude": [
+            "extras", 
+            "docs", 
+            "tests", 
+            "test", 
+            "*.doxyfile", 
+            "*.pdf"
+        ]
+    }, 
+    "id": 645
+}

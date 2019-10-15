@@ -1,0 +1,35 @@
+{
+    "name": "SensorModbusMaster", 
+    "version": "0.6.5", 
+    "keywords": [
+        "sensor", 
+        "modbus", 
+        "master", 
+        "envirodiy"
+    ], 
+    "description": "Arduino library for communicating via modbus with the Arduino acting as master", 
+    "repository": {
+        "type": "git", 
+        "url": "https://github.com/EnviroDIY/SensorModbusMaster.git"
+    }, 
+    "authors": [
+        {
+            "email": "sdamiano@stroudcenter.org", 
+            "url": null, 
+            "maintainer": true, 
+            "name": "Sara Damiano"
+        }
+    ], 
+    "license": "BSD-3-Clause", 
+    "frameworks": [
+        "arduino"
+    ], 
+    "platforms": [
+        "atmelavr", 
+        "atmelsam"
+    ], 
+    "examples": [
+        "utils/*/*.ino"
+    ], 
+    "id": 1824
+}
