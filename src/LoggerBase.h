@@ -6,12 +6,6 @@
  *Initial library developement done by Sara Damiano (sdamiano@stroudcenter.org).
  *
  *This file is for the basic logging functions - ie, saving to an SD card.
- 
-
- NOTE BY RACHEL:
- 
- CHANGED all timeZone integers to int16 so I can have two digit time zones
- 
 */
 
 // Header Guards
@@ -19,7 +13,7 @@
 #define LoggerBase_h
 
 // Debugging Statement
-#define MS_LOGGERBASE_DEBUG
+// #define MS_LOGGERBASE_DEBUG
 
 #ifdef MS_LOGGERBASE_DEBUG
 #define MS_DEBUGGING_STD "LoggerBase"
@@ -241,6 +235,10 @@ public:
 
     // This sets the real time clock to the given time
     bool setRTClock(uint32_t UTCEpochSeconds);
+
+    // This checks that the logger time is within a "sane" range
+    bool isRTCSane(void);
+    bool isRTCSane(uint32_t epochTime);
 
     // This sets static variables for the date/time - this is needed so that all
     // data outputs (SD, EnviroDIY, serial printing, etc) print the same time

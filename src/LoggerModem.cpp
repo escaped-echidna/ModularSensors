@@ -37,12 +37,15 @@ loggerModem::loggerModem(int8_t powerPin, int8_t statusPin, bool statusLevel,
     _lastConnectionCheck = 0;
     _lastATCheck = 0;
 
+    _priorActivationDuration = 0;
+    _priorPoweredDuration = 0;
+
     previousCommunicationFailed = false;
 }
 
 
 // Destructor
-loggerModem::~loggerModem(){}
+loggerModem::~loggerModem() {}
 
 
 void loggerModem::setModemLED(int8_t modemLEDPin)
@@ -74,13 +77,18 @@ void loggerModem::modemHardReset(void)
 {
     if (_modemResetPin >= 0)
     {
-        MS_DBG(F("Doing a hard reset!"));
+        MS_DBG(F("Doing a hard reset on the modem!"));
         digitalWrite(_modemResetPin, LOW);
         delay(200);
         digitalWrite(_modemResetPin, HIGH);
         // Re-set _millisSensorActivated  - the hard reset is a new activation
         _millisSensorActivated = millis();
         // Unset the flag for prior communication failure
+        previousCommunicationFailed = false;
+    }
+    else
+    {
+        MS_DBG(F("No way has been provided to reset the modem!"));
         previousCommunicationFailed = false;
     }
 }
@@ -101,6 +109,7 @@ bool loggerModem::setup(void)
     {
         pinMode(_modemSleepRqPin, OUTPUT);
         // NOTE:  Not setting level of sleep request pin
+        // extraModemSetup() should set the sleep request pin level if necessary
     }
     if (_modemResetPin >= 0)
     {
@@ -133,7 +142,10 @@ bool loggerModem::setup(void)
         MS_DBG(F("Waking up the modem for setup ..."));
         success &= wake();
     }
-    else MS_DBG(F("Modem was already awake and should be ready for setup."));
+    else
+    {
+        MS_DBG(F("Modem was already awake and should be ready for setup."));
+    }
 
     if (success)
     {
@@ -141,10 +153,19 @@ bool loggerModem::setup(void)
         // be enough time to allow any modem to be ready to respond
         MS_DBG(F("Running modem's begin function ..."));
         success &= extraModemSetup();
-        if (success) MS_DBG(F("... Complete!  It's a"), getSensorName());
-        else MS_DBG(F("... Failed!  It's a"), getSensorName());
+        if (success)
+        {
+            MS_DBG(F("... Complete!  It's a"), getSensorName());
+        }
+        else
+        {
+            MS_DBG(F("... Failed!  It's a"), getSensorName());
+        }
     }
-    else MS_DBG(F("... "), getSensorName(), F("did not wake up and cannot be set up!"));
+    else
+    {
+        MS_DBG(F("... "), getSensorName(), F("did not wake up and cannot be set up!"));
+    }
 
     MS_DBG(_modemName, F("warms up in"), _warmUpTime_ms, F("ms, indicates status in"),
            _statusTime_ms, F("ms, is responsive to AT commands in less than"),
@@ -153,9 +174,15 @@ bool loggerModem::setup(void)
 
     // Set the status bit marking that the modem has been set up (bit 0)
     // Only set the bit if setup was successful!
-    if (success) _sensorStatus |= 0b00000001;
+    if (success)
+    {
+        _sensorStatus |= 0b00000001;
+    }
     // Otherwise, set the status error bit (bit 7)
-    else _sensorStatus |= 0b10000000;
+    else
+    {
+        _sensorStatus |= 0b10000000;
+    }
 
     // Put the modem to sleep after finishing setup
     // Only go to sleep if it had been asleep and is now awake
@@ -166,7 +193,10 @@ bool loggerModem::setup(void)
         MS_DBG(F("Running given modem sleep function ..."));
         success &= modemSleepFxn();
     }
-    else MS_DBG(F("Leaving modem on after setup ..."));
+    else
+    {
+        MS_DBG(F("Leaving modem on after setup ..."));
+    }
     // Do NOT power down at the end, because this fxn cannot have powered the
     // modem up.
 
@@ -180,7 +210,8 @@ bool loggerModem::wake(void)
 {
     // Sensor::wake() checks if the power pin is on and sets the wake timestamp
     // and status bits.  If it returns false, there's no reason to go on.
-    if (!Sensor::wake()) return false;
+    if (!Sensor::wake())
+        return false;
     // NOTE:  _millisSensorActivated can be set here or by modemHardReset
     // NOTE:  This is the ONLY place status bit 4 is set!
     bool success = true;
@@ -206,7 +237,8 @@ bool loggerModem::wake(void)
     if (_dataPin >= 0 && _statusTime_ms == 0 && digitalRead(_dataPin) != _statusLevel)
     {
         MS_DBG(F("Status pin"), _dataPin, F("on"), getSensorName(), F("is"),
-                   digitalRead(_dataPin), F("indicating it is off!"));
+               digitalRead(_dataPin), F("indicating it is off!"));
+        MS_DBG(F("Attempting a hard reset on the modem!"));
         success = false;
         modemHardReset();
         success = digitalRead(_dataPin) == _statusLevel;
@@ -257,8 +289,10 @@ bool loggerModem::isStable(bool debug)
     // essentially already "stable."
     if (!bitRead(_sensorStatus, 4))
     {
-        if (debug) MS_DBG(getSensorName(),
-                F("did not wake; AT commands will not be attempted!"));
+        if (debug)
+        {
+            MS_DBG(getSensorName(), F("did not wake; AT commands will not be attempted!"));
+        }
         return true;
     }
 
@@ -271,7 +305,7 @@ bool loggerModem::isStable(bool debug)
     // plus a 500ms buffer, then, if it's the first time this happened give up
     // and move on.  If it's happened twice in a row, try a hard reset and
     // keep waiting.
-    if ( (_dataPin >= 0 && elapsed_since_wake_up > (_statusTime_ms + 500) &&
+    if ((_dataPin >= 0 && elapsed_since_wake_up > (_statusTime_ms + 500) &&
               digitalRead(_dataPin) != _statusLevel))
     {
         // if we maxed out the wait for the status pin after the previous wake
@@ -279,14 +313,23 @@ bool loggerModem::isStable(bool debug)
         // and continue waiting
         if (previousCommunicationFailed)
         {
+            if (debug)
+            {
+                MS_DBG(F("It's been"), (elapsed_since_wake_up), F("ms, and status pin"),
+                       _dataPin, F("on"), getSensorName(), F("is"), digitalRead(_dataPin),
+                       F("indicating it is off.  Attempting a hard reset on the modem!"));
+            }
             modemHardReset();
             return false;
         }
         else
         {
-            if (debug) MS_DBG(F("It's been"), (elapsed_since_wake_up), F("ms, and status pin"),
-              _dataPin, F("on"), getSensorName(), F("is"), digitalRead(_dataPin),
-              F("indicating it is off.  Will not continue to attempt communication!"));
+            if (debug)
+            {
+                MS_DBG(F("It's been"), (elapsed_since_wake_up), F("ms, and status pin"),
+                       _dataPin, F("on"), getSensorName(), F("is"), digitalRead(_dataPin),
+                       F("indicating it is off.  Will not continue to attempt communication!"));
+            }
             // Unset status bit 4 (wake up success) and _millisSensorActivated
             // We unset these bits here because it's possible that a modem "passed"
             // the wake command, but never really woke.  For sensors that take time
@@ -301,13 +344,17 @@ bool loggerModem::isStable(bool debug)
 
     // We don't want to ping any of the modems too fast so they don't get
     // overwhelmed.  Make sure we've waited a little
-    if (now - _lastATCheck < 250) return false;
+    if (now - _lastATCheck < 250)
+        return false;
 
     // If the modem is now responding to AT commands, it's "stable"
     if (didATRespond())
     {
-        if (debug) MS_DBG(F("It's been"), (elapsed_since_wake_up), F("ms, and"),
-               getSensorName(), F("is now responding to AT commands!"));
+        if (debug)
+        {
+            MS_DBG(F("It's been"), (elapsed_since_wake_up), F("ms, and"),
+                   getSensorName(), F("is now responding to AT commands!"));
+        }
         _lastATCheck = now;
         previousCommunicationFailed = false;
         return true;
@@ -323,13 +370,22 @@ bool loggerModem::isStable(bool debug)
         {
             // if we maxed out the wait last time and we've maxed it again,
             // do a hard reset and continue waiting
+            if (debug)
+            {
+                MS_DBG(F("It's been"), (elapsed_since_wake_up), F("ms, and status pin"),
+                       _dataPin, F("on"), getSensorName(), F("is"), digitalRead(_dataPin),
+                       F("indicating it is off.  Attempting a hard reset on the modem!"));
+            }
             modemHardReset();
             return false;
         }
         else
         {
-            if (debug) MS_DBG(F("It's been"), (elapsed_since_wake_up), F("ms, and"),
-                getSensorName(), F("has maxed out wait for AT command reply!  Ending wait."));
+            if (debug)
+            {
+                MS_DBG(F("It's been"), (elapsed_since_wake_up), F("ms, and"),
+                       getSensorName(), F("has maxed out wait for AT command reply!  Ending wait."));
+            }
             // Unset status bit 4 (wake up success) and _millisSensorActivated
             // It's safe to unset these here because we've already tested and failed
             // to respond to AT commands.
@@ -387,20 +443,32 @@ bool loggerModem::addSingleMeasurementResult(void)
         // convert responses to floats
         if (success)
         {
-            if (state != 99) fstate = (float)state;
-            if (bpercent != -99) fbpercent = (float)bpercent;
-            if (volt != 9999) fvolt = (float)volt;
+            if (state != 99)
+                fstate = (float)state;
+            if (bpercent != -99)
+                fbpercent = (float)bpercent;
+            if (volt != 9999)
+                fvolt = (float)volt;
             MS_DBG(F("Modem battery charge state:"), fstate);
             MS_DBG(F("Modem battery percentage:"), fbpercent);
             MS_DBG(F("Modem battery voltage:"), fvolt);
         }
-        else MS_DBG(F("Battery information not returned!"));
+        else
+        {
+            MS_DBG(F("Battery information not returned!"));
+        }
 
         MS_DBG(F("Getting chip temperature, if possible:"));
         temp = getModemTemperature();
         MS_DBG(F("Modem temperature:"), temp);
     }
-    else MS_DBG(getSensorName(), F("is not expected to return measurement results!"));
+    else
+    {
+        MS_DBG(getSensorName(), F("is not expected to return measurement results!"));
+    }
+
+    MS_DBG(F("PRIOR modem active time:"), String(_priorActivationDuration, 3));
+    MS_DBG(F("PRIOR modem powered time:"), String(_priorPoweredDuration, 3));
 
     verifyAndAddMeasurementResult(MODEM_RSSI_VAR_NUM, rssi);
     verifyAndAddMeasurementResult(MODEM_PERCENT_SIGNAL_VAR_NUM, percent);
@@ -408,6 +476,8 @@ bool loggerModem::addSingleMeasurementResult(void)
     verifyAndAddMeasurementResult(MODEM_BATTERY_PERCENT_VAR_NUM, fbpercent);
     verifyAndAddMeasurementResult(MODEM_BATTERY_VOLT_VAR_NUM, fvolt);
     verifyAndAddMeasurementResult(MODEM_TEMPERATURE_VAR_NUM, temp);
+    verifyAndAddMeasurementResult(MODEM_ACTIVATION_VAR_NUM, _priorActivationDuration);
+    verifyAndAddMeasurementResult(MODEM_POWERED_VAR_NUM, _priorPoweredDuration);
 
     /* Unset the time stamp for the beginning of this measurement */
     _millisMeasurementRequested = 0;
@@ -436,12 +506,40 @@ void loggerModem::modemPowerUp(void)
     {
         MS_DBG(F("Power to"), getSensorName(), F("is not controlled by this library."));
         // Mark the power-on time, just in case it had not been marked
-        if (_millisPowerOn == 0) _millisPowerOn = millis();
+        if (_millisPowerOn == 0)
+            _millisPowerOn = millis();
     }
     // Set the status bit for sensor power attempt (bit 1) and success (bit 2)
     _sensorStatus |= 0b00000110;
 }
 
+void loggerModem::modemPowerDown(void)
+{
+    if (_powerPin >= 0)
+    {
+        _priorPoweredDuration = ((float)(millis() - _millisPowerOn)) / 1000;
+        MS_DBG(F("Total modem power-on time (s):"), String(_priorPoweredDuration, 3));
+
+        MS_DBG(F("Turning off power to"), getSensorName(), F("with pin"), _powerPin);
+        digitalWrite(_powerPin, LOW);
+        // Unset the power-on time
+        _millisPowerOn = 0;
+        // Unset the status bits for sensor power (bits 1 & 2),
+        // activation (bits 3 & 4), and measurement request (bits 5 & 6)
+        _sensorStatus &= 0b10000001;
+    }
+    else
+    {
+        MS_DBG(F("Power to"), getSensorName(), F("is not controlled by this library."));
+        // Unset the power-on time and bits even if we didn't do anything.
+        // This prevents the wake from happening on modems with no power pin
+        // unless modemPowerUp() is called.
+        _millisPowerOn = 0;
+        // Unset the status bits for sensor power (bits 1 & 2),
+        // activation (bits 3 & 4), and measurement request (bits 5 & 6)
+        _sensorStatus &= 0b10000001;
+    }
+}
 
 bool loggerModem::modemSleepPowerDown(void)
 {
@@ -457,18 +555,23 @@ bool loggerModem::modemSleepPowerDown(void)
     if (_dataPin >= 0 && digitalRead(_dataPin) != _statusLevel && !_alwaysRunWake)
     {
         MS_DBG(F("Status pin"), _dataPin, F("on"), getSensorName(), F("is"),
-               digitalRead(_dataPin), F("indicating it is already off!  Will not run sleep function."));
+               digitalRead(_dataPin),
+               F("indicating it is already off!  Will not run sleep function."));
+        _priorActivationDuration = 0;
     }
     // If there's no status pin, check against the status bits
     else if (_dataPin < 0 && !bitRead(_sensorStatus, 4) && !_alwaysRunWake)
     {
         MS_DBG(getSensorName(), F("was never sucessfully turned on.  Will not run sleep function."));
+        _priorActivationDuration = 0;
     }
     else
     {
         // Run the sleep function
         MS_DBG(F("Running given sleep function for"), getSensorName());
         success &= modemSleepFxn();
+        _priorActivationDuration = ((float)(millis() - _millisSensorActivated)) / 1000;
+        MS_DBG(F("Total modem active time (s):"), String(_priorActivationDuration, 3));
         modemLEDOff();
     }
 
@@ -487,18 +590,27 @@ bool loggerModem::modemSleepPowerDown(void)
         // This allows the modem to shut down gracefully.
         if (_dataPin >= 0)
         {
-            MS_DBG(F("Waiting up to"), _disconnetTime_ms, F("milliseconds for graceful shutdown as indicated by pin"),
+            MS_DBG(F("Waiting up to"), _disconnetTime_ms,
+            F("milliseconds for graceful shutdown as indicated by pin"),
                    _dataPin, F("going"), !_statusLevel, F("..."));
             while (millis() - start < _disconnetTime_ms && digitalRead(_dataPin) == _statusLevel){}
             if (digitalRead(_dataPin) == _statusLevel)
+            {
                 MS_DBG(F("... "), getSensorName(), F("did not successfully shut down!"));
-            else MS_DBG(F("... shutdown complete after"), millis() - start, F("ms."));
+            }
+            else
+            {
+                MS_DBG(F("... shutdown complete after"), millis() - start, F("ms."));
+            }
         }
         else if (_disconnetTime_ms > 0)
         {
             MS_DBG(F("Waiting"), _disconnetTime_ms, F("ms for graceful shutdown."));
             while (millis() - start < _disconnetTime_ms){}
         }
+
+        _priorPoweredDuration = ((float)(millis() - _millisPowerOn)) / 1000;
+        MS_DBG(F("Total modem power-on time (s):"), String(_priorPoweredDuration, 3));
 
         MS_DBG(F("Turning off power to"), getSensorName(), F("with pin"), _powerPin);
         digitalWrite(_powerPin, LOW);
@@ -510,6 +622,9 @@ bool loggerModem::modemSleepPowerDown(void)
     }
     else
     {
+
+        _priorPoweredDuration = (float)-9999;
+
         // If we're not going to power the modem down, there's no reason to hold
         // up the  main processor while waiting for the modem to shut down.
         // It can just do its thing unwatched while the main processor sleeps.
@@ -567,9 +682,11 @@ int16_t loggerModem::getPctFromCSQ(int16_t csq)
 // Helper to get signal percent from RSSI
 int16_t loggerModem::getPctFromRSSI(int16_t rssi)
 {
-    int16_t pct = 1.6163*rssi + 182.61;
-    if (rssi == 0) pct = 0;
-    if (rssi == (255-93)) pct = 0;  // This is a no-data-yet value from XBee
+    int16_t pct = 1.6163 * rssi + 182.61;
+    if (rssi == 0)
+        pct = 0;
+    if (rssi == (255 - 93))
+        pct = 0; // This is a no-data-yet value from XBee
     return pct;
 }
 
@@ -586,7 +703,10 @@ uint32_t loggerModem::parseNISTBytes(byte nistBytes[4])
                    '=', nistBytes[i], '=', String(nistBytes[i], BIN));
         secFrom1900 += 0x000000FF & nistBytes[i];
         /* MS_DBG(F("\nseconds from 1900 after byte:"),String(secFrom1900, BIN)); */
-        if (i+1 < 4) {secFrom1900 = secFrom1900 << 8;}
+        if (i + 1 < 4)
+        {
+            secFrom1900 = secFrom1900 << 8;
+        }
     }
     MS_DBG(F("Seconds from Jan 1, 1900 returned by NIST (UTC):"),
                secFrom1900, '=', String(secFrom1900, BIN));
@@ -599,9 +719,18 @@ uint32_t loggerModem::parseNISTBytes(byte nistBytes[4])
     uint32_t unixTimeStamp = secFrom1900 - 2208988800;
     MS_DBG(F("Unix Timestamp returned by NIST (UTC):"), unixTimeStamp);
     /* If before Jan 1, 2019 or after Jan 1, 2030, most likely an error */
-    if (unixTimeStamp < 1546300800) return 0;
-    else if (unixTimeStamp > 1893456000) return 0;
-    else return unixTimeStamp;
+    if (unixTimeStamp < 1546300800)
+    {
+        return 0;
+    }
+    else if (unixTimeStamp > 1893456000)
+    {
+        return 0;
+    }
+    else
+    {
+        return unixTimeStamp;
+    }
 }
 
 

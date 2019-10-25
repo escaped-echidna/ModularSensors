@@ -18,10 +18,27 @@ VariableArray::VariableArray(uint8_t variableCount, Variable *variableList[])
     _maxSamplestoAverage = countMaxToAverage();
     _sensorCount = getSensorCount();
 }
+VariableArray::VariableArray(uint8_t variableCount, Variable *variableList[], const char *uuids[])
+  : arrayOfVars(variableList), _variableCount(variableCount)
+{
+    _maxSamplestoAverage = countMaxToAverage();
+    _sensorCount = getSensorCount();
+    matchUUIDs(uuids);
+}
+
 // Destructor
 VariableArray::~VariableArray(){}
 
+void VariableArray::VariableArray::begin(uint8_t variableCount, Variable *variableList[], const char *uuids[])
+{
+    _variableCount = variableCount;
+    arrayOfVars = variableList;
 
+    _maxSamplestoAverage = countMaxToAverage();
+    _sensorCount = getSensorCount();
+    matchUUIDs(uuids);
+    checkVariableUUIDs();
+}
 void VariableArray::begin(uint8_t variableCount, Variable *variableList[])
 {
     _variableCount = variableCount;
@@ -65,6 +82,15 @@ uint8_t VariableArray::getSensorCount(void)
     return numSensors;
 }
 
+// This matches UUID's from an array of pointers to the variable array
+void VariableArray::matchUUIDs(const char *uuids[])
+{
+    for (uint8_t i = 0; i < _variableCount; i++)
+    {
+        arrayOfVars[i]->setVarUUID(uuids[i]);
+        // MS_DBG(F("Assigned UUID"), uuids[i], F("to variable"), arrayOfVars[i]->getVarCode());
+    }
+}
 
 // Public functions for interfacing with a list of sensors
 // This sets up all of the sensors in the list
@@ -876,7 +902,6 @@ bool VariableArray::isLastVarFromSensor(int arrayIndex)
         // MS_DEEP_DBG(F("   ... Nope, it's calculated!"));
         return false;
     }
-
     else
     {
         String sensNameLoc = arrayOfVars[arrayIndex]->getParentSensorNameAndLocation();
@@ -919,12 +944,30 @@ bool VariableArray::checkVariableUUIDs(void)
     bool success = true;
     for (uint8_t i = 0; i < _variableCount; i++)
     {
-        if (!arrayOfVars[i]->checkUUIDFormat()) // Skip non-unique sensors
+        if (!arrayOfVars[i]->checkUUIDFormat())
         {
             PRINTOUT(arrayOfVars[i]->getVarCode(), F("has an invalid UUID!"));
             success = false;
         }
+        for (uint8_t j = i + 1; j < _variableCount; j++)
+        {
+            if (arrayOfVars[i]->getVarUUID() == arrayOfVars[j]->getVarUUID())
+            {
+                PRINTOUT(arrayOfVars[i]->getVarCode(),
+                         F("has a non-unique UUID!"));
+                success = false;
+                // don't keep looping
+                j = _variableCount;
+            }
+        }
     }
-    if (success) PRINTOUT(F("All variable UUID's appear to be correctly formed."));
+    if (success)
+        PRINTOUT(F("All variable UUID's appear to be correctly formed.\n"));
+    // Print out all UUID's to check
+    for (uint8_t i = 0; i < _variableCount; i++)
+    {
+        PRINTOUT(arrayOfVars[i]->getVarUUID(), F("->"), arrayOfVars[i]->getVarCode());
+    }
+    PRINTOUT(' ');
     return success;
 }

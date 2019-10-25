@@ -6,12 +6,6 @@
  *Initial library developement done by Sara Damiano (sdamiano@stroudcenter.org).
  *
  *This file is for the basic logging functions - ie, saving to an SD card.
- 
- RACHEL NOTE:
- 
- changed timeZone variables to be int16_t so time zone can be 2 decimals
- 
- 
 */
 
 #include "LoggerBase.h"
@@ -380,8 +374,8 @@ bool Logger::syncRTC()
         if (_logModem->connectInternet(120000L))
         {
             success = setRTClock(_logModem->getNISTTime());
-            // Disconnect from the network - ehh, why bother
-            // _logModem->disconnectInternet();
+            // Disconnect from the network
+            _logModem->disconnectInternet();
         }
         // Turn off the modem
         _logModem->modemSleepPowerDown();
@@ -396,6 +390,11 @@ void Logger::registerDataPublisher(dataPublisher* publisher)
     uint8_t i = 0;
     for (; i < MAX_NUMBER_SENDERS; i++)
     {
+        if (dataPublishers[i] == publisher)
+        {
+            MS_DBG(F("dataPublisher already registered."));
+            return;
+        }
         if (dataPublishers[i] == NULL) break;
     }
 
@@ -412,7 +411,7 @@ void Logger::publishDataToRemotes(void)
     {
         if (dataPublishers[i] != NULL)
         {
-            PRINTOUT(F("\nSending data to"), dataPublishers[i]->getEndpoint());
+            PRINTOUT(F("\nSending data to ["),i,F("]"), dataPublishers[i]->getEndpoint());
             // dataPublishers[i]->publishData(_logModem->getClient());
             dataPublishers[i]->publishData();
             watchDogTimer.resetWatchDog();
@@ -435,11 +434,17 @@ void Logger::setLoggerTimeZone(int8_t timeZone)
     #ifdef STANDARD_SERIAL_OUTPUT
         const char* prtout1 = "Logger timezone is set to UTC";
         if (_loggerTimeZone == 0)
+        {
             PRINTOUT(prtout1);
+        }
         else if (_loggerTimeZone > 0)
+        {
             PRINTOUT(prtout1, '+', _loggerTimeZone);
+        }
         else
+        {
             PRINTOUT(prtout1, _loggerTimeZone);
+        }
     #endif
 }
 int8_t Logger::getLoggerTimeZone(void)
@@ -461,11 +466,17 @@ void Logger::setRTCTimeZone(int8_t timeZone)
     #ifdef STANDARD_SERIAL_OUTPUT
         const char* prtout1 = "RTC timezone is set to UTC";
         if ((_loggerTimeZone - _loggerRTCOffset) == 0)
+        {
             PRINTOUT(prtout1);
+        }
         else if ((_loggerTimeZone - _loggerRTCOffset) > 0)
+        {
             PRINTOUT(prtout1, '+', (_loggerTimeZone - _loggerRTCOffset));
+        }
         else
+        {
             PRINTOUT(prtout1, (_loggerTimeZone - _loggerRTCOffset));
+        }
     #endif
 }
 int8_t Logger::getRTCTimeZone(void)
@@ -485,11 +496,17 @@ void Logger::setTZOffset(int8_t offset)
     _loggerRTCOffset = offset;
     // Some helpful prints for debugging
     if (_loggerRTCOffset == 0)
+    {
         PRINTOUT(F("RTC and Logger are set in the same timezone."));
+    }
     else if (_loggerRTCOffset < 0)
+    {
         PRINTOUT(F("RTC is set"), -1*_loggerRTCOffset, F("hours ahead of logging timezone"));
+    }
     else
+    {
         PRINTOUT(F("RTC is set"), _loggerRTCOffset, F("hours behind the logging timezone"));
+    }
 }
 int8_t Logger::getTZOffset(void)
 {
@@ -614,6 +631,25 @@ bool Logger::setRTClock(uint32_t UTCEpochSeconds)
     }
 }
 
+// This checks that the logger time is within a "sane" range
+bool Logger::isRTCSane(void)
+{
+    uint32_t curRTC = getNowEpoch();
+    return isRTCSane(curRTC);
+}
+bool Logger::isRTCSane(uint32_t epochTime)
+{
+    if (epochTime < 1546300800 ||  /*Before September 01, 2019*/
+        epochTime > 1735689600)  /*After January 1, 2025*/
+    {
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
+
 
 // This sets static variables for the date/time - this is needed so that all
 // data outputs (SD, EnviroDIY, serial printing, etc) print the same time
@@ -629,7 +665,6 @@ void Logger::markTime(void)
 
 
 // This checks to see if the CURRENT time is an even interval of the logging rate
-// or we're in the first 15 minutes of logging
 bool Logger::checkInterval(void)
 {
     bool retval;
@@ -652,12 +687,59 @@ bool Logger::checkInterval(void)
         MS_DBG(F("Not time yet."));
         retval = false;
     }
+    if (!isRTCSane(checkTime))
+    {
+        PRINTOUT(F("----- WARNING ----- !!!!!!!!!!!!!!!!!!!!"));
+        alertOn();
+        delay(25);
+        alertOff();
+        delay(25);
+        PRINTOUT(F("!!!!!!!!!! ----- WARNING ----- !!!!!!!!!!"));
+        alertOn();
+        delay(25);
+        alertOff();
+        delay(25);
+        PRINTOUT(F("!!!!!!!!!!!!!!!!!!!! ----- WARNING ----- "));
+        alertOn();
+        delay(25);
+        alertOff();
+        delay(25);
+        PRINTOUT(' ');
+        alertOn();
+        delay(25);
+        alertOff();
+        delay(25);
+        PRINTOUT(F("The current clock timestamp is not valid!"));
+        alertOn();
+        delay(25);
+        alertOff();
+        delay(25);
+        PRINTOUT(' ');
+        alertOn();
+        delay(25);
+        alertOff();
+        delay(25);
+        PRINTOUT(F("----- WARNING ----- !!!!!!!!!!!!!!!!!!!!"));
+        alertOn();
+        delay(25);
+        alertOff();
+        delay(25);
+        PRINTOUT(F("!!!!!!!!!! ----- WARNING ----- !!!!!!!!!!"));
+        alertOn();
+        delay(25);
+        alertOff();
+        delay(25);
+        PRINTOUT(F("!!!!!!!!!!!!!!!!!!!! ----- WARNING ----- "));
+        alertOn();
+        delay(25);
+        alertOff();
+        delay(25);
+    }
     return retval;
 }
 
 
 // This checks to see if the MARKED time is an even interval of the logging rate
-// or we're in the first 15 minutes of logging
 bool Logger::checkMarkedInterval(void)
 {
     bool retval;
@@ -1011,8 +1093,14 @@ void Logger::printFileHeader(Stream *stream)
 
     // We'll finish up the the custom variable codes
     String dtRowHeader = F("Date and Time in UTC");
-    if (_loggerTimeZone > 0) dtRowHeader += '+' + _loggerTimeZone;
-    else if (_loggerTimeZone < 0) dtRowHeader += _loggerTimeZone;
+    if (_loggerTimeZone > 0)
+    {
+        dtRowHeader += '+' + _loggerTimeZone;
+    }
+    else if (_loggerTimeZone < 0)
+    {
+        dtRowHeader += _loggerTimeZone;
+    }
     STREAM_CSV_ROW(dtRowHeader, getVarCodeAtI(i));
 }
 
@@ -1112,7 +1200,7 @@ bool Logger::openFile(String& filename, bool createFile, bool writeDefaultHeader
                 // Add header information
                 printFileHeader(&logFile);
                 // Print out the header for debugging
-                #if defined DEBUGGING_SERIAL_OUTPUT
+                #if defined DEBUGGING_SERIAL_OUTPUT && defined MS_DEBUGGING_STD
                     MS_DBG(F("\n \\/---- File Header ----\\/"));
                     printFileHeader(&DEBUGGING_SERIAL_OUTPUT);
                     MS_DBG('\n');
@@ -1166,7 +1254,7 @@ bool Logger::createLogFile(String& filename, bool writeDefaultHeader)
 }
 bool Logger::createLogFile(bool writeDefaultHeader)
 {
-    if (_fileName = "") generateAutoFileName();
+    if (_fileName == "") generateAutoFileName();
     return createLogFile(_fileName, writeDefaultHeader);
 }
 
@@ -1224,7 +1312,7 @@ bool Logger::logToSD(void)
     {
         // Next try to create a new file, bail if we couldn't create it
         // Generate a filename with the current date, if the file name isn't set
-        if (_fileName = "") generateAutoFileName();
+        if (_fileName == "") generateAutoFileName();
         // Do add a default header to the new file!
         if (!openFile(_fileName, true, true))
         {
@@ -1347,6 +1435,7 @@ void Logger::testingMode()
     _internalArray->sensorsPowerDown();
 
     // Turn the modem off
+    _logModem->disconnectInternet();
     _logModem->modemSleepPowerDown();
 
     PRINTOUT(F("Exiting testing mode"));
@@ -1477,10 +1566,10 @@ void Logger::begin()
 
     if (_samplingFeatureUUID != NULL)
     {
-        MS_DBG(F("Sampling feature UUID is:"), _samplingFeatureUUID);
+        PRINTOUT(F("Sampling feature UUID is:"), _samplingFeatureUUID);
     }
 
-    PRINTOUT(F("Logger portion of setup finished."));
+    PRINTOUT(F("Logger portion of setup finished.\n"));
 }
 
 
@@ -1585,7 +1674,9 @@ void Logger::logDataAndPublish(void)
                 publishDataToRemotes();
                 watchDogTimer.resetWatchDog();
 
-                if (Logger::markedEpochTime != 0 && Logger::markedEpochTime % 86400 == 43200)
+                if ((Logger::markedEpochTime != 0 &&
+                     Logger::markedEpochTime % 86400 == 43200) ||
+                    !isRTCSane(Logger::markedEpochTime))
                 // Sync the clock at noon
                 {
                     MS_DBG(F("Running a daily clock sync..."));
@@ -1593,9 +1684,9 @@ void Logger::logDataAndPublish(void)
                     watchDogTimer.resetWatchDog();
                 }
 
-                // Disconnect from the network - ehh, why bother
-                // MS_DBG(F("Disconnecting from the Internet..."));
-                // _logModem->disconnectInternet();
+                // Disconnect from the network
+                MS_DBG(F("Disconnecting from the Internet..."));
+                _logModem->disconnectInternet();
             }
             else
             {

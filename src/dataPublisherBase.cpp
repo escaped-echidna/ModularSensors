@@ -114,7 +114,7 @@ void dataPublisher::printTxBuffer(Stream *stream, bool addNewLine)
     stream->write(txBuffer, strlen(txBuffer));
     if (addNewLine) \
     {
-        stream->print("\r\n");        
+        stream->print("\r\n");
     }
     stream->flush();
 
@@ -131,7 +131,10 @@ int16_t dataPublisher::publishData()
         PRINTOUT(F("ERROR! No web client assigned to publish data!"));
         return 0;
     }
-    else return publishData(_inClient);
+    else
+    {
+        return publishData(_inClient);
+    }
 }
 // Duplicates for backwards compatibility
 int16_t dataPublisher::sendData(Client *_outClient)
@@ -141,4 +144,46 @@ int16_t dataPublisher::sendData(Client *_outClient)
 int16_t dataPublisher::sendData()
 {
     return publishData();
+}
+
+
+// This spits out a string description of the PubSubClient codes
+String dataPublisher::parseMQTTState(int state)
+{
+    // // Possible values for client.state()
+    // #define MQTT_CONNECTION_TIMEOUT     -4
+    // #define MQTT_CONNECTION_LOST        -3
+    // #define MQTT_CONNECT_FAILED         -2
+    // #define MQTT_DISCONNECTED           -1
+    // #define MQTT_CONNECTED               0
+    // #define MQTT_CONNECT_BAD_PROTOCOL    1
+    // #define MQTT_CONNECT_BAD_CLIENT_ID   2
+    // #define MQTT_CONNECT_UNAVAILABLE     3
+    // #define MQTT_CONNECT_BAD_CREDENTIALS 4
+    // #define MQTT_CONNECT_UNAUTHORIZED    5
+    switch (state)
+    {
+        case -4:
+            return "-4: MQTT_CONNECTION_TIMEOUT";
+        case -3:
+            return "-3: MQTT_CONNECTION_LOST";
+        case -2:
+            return "-2: MQTT_CONNECT_FAILED";
+        case -1:
+            return "-1: MQTT_DISCONNECTED";
+        case 0:
+            return "0: MQTT_CONNECTED";
+        case 1:
+            return "1: MQTT_CONNECT_BAD_PROTOCOL";
+        case 2:
+            return "2: MQTT_CONNECT_BAD_CLIENT_ID";
+        case 3:
+            return "3: MQTT_CONNECT_UNAVAILABLE";
+        case 4:
+            return "4: MQTT_CONNECT_BAD_CREDENTIALS";
+        case 5:
+            return "5: MQTT_CONNECT_UNAUTHORIZED";
+        default:
+            return String(state) + ": UNKNOWN";
+    }
 }
