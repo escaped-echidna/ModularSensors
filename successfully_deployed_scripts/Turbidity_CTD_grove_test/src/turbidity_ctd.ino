@@ -33,9 +33,9 @@ const char *libraryVersion = "0.23.16";
 // The name of this file
 const char *sketchName = "turbidity_ctd.ino";
 // Logger ID, also becomes the prefix for the name of the data file on SD card
-const char *LoggerID = "Tarawera";
+const char *LoggerID = "okaro v 2";
 // How frequently (in minutes) to log data
-const uint8_t loggingInterval = 5; // set to 2 minutes -rm
+const uint8_t loggingInterval = 15; // set to 2 minutes -rm
 // Your logger's timezone.
 const int8_t timeZone = 12;  // Eastern Standard Time
 // NOTE:  Daylight savings time will not be applied!  Please use standard time!
@@ -120,7 +120,7 @@ DecagonCTD ctd(*CTDSDI12address, SDI12Power, SDI12Data, CTDNumberReadings);
 #include <Adafruit_ADS1015.h>
 
 uint8_t i2cAddressTurbidity = 0x48;
-uint8_t measurementsToAverage = 5;
+uint8_t measurementsToAverage = 7;
 uint8_t ADSChannelTurbidity=1;
 
 float calculateTurbidity(void)
@@ -148,15 +148,15 @@ float calculateTurbidity(void)
     
     float voltage = (sum_measurements/measurementsToAverage);
 
-    Serial.print(F(" Calculating Turbidity... "));
+   // Serial.print(F(" Calculating Turbidity... "));
     
     // Reading analog 1 pin to get raw value
     //int sensorValue = analogRead(A2);
-    Serial.print(F(" Sensor value is ... "));
-    Serial.println(sensorValue);
+   // Serial.print(F(" Sensor value is ... "));
+   // Serial.println(sensorValue);
 
-    Serial.print(F(" Voltage is ... "));
-    Serial.println(voltage);    
+   // Serial.print(F(" Voltage is ... "));
+   // Serial.println(voltage);    
 
     // adjusting turbidity using formula ax^2 + bx + c
 
@@ -167,21 +167,21 @@ float calculateTurbidity(void)
      if (sensorValue != -9999)  // make sure input is good
      {
          calculatedResult = Ta*(voltage*voltage) + Tb*voltage + Tc;
-            Serial.print(F(" Calculated result is ... "));
-            Serial.println(calculatedResult);
+           // Serial.print(F(" Calculated result is ... "));
+           // Serial.println(calculatedResult);
      }
     return calculatedResult;
 }
 
 // Properties of the calculated variable
 const uint8_t calculatedVarResolution = 2;  // The number of digits after the decimal place
-const char *calculatedVarName = "Turbidity";  // This must be a value from http://vocabulary.odm2.org/variablename/
-const char *calculatedVarUnit = "NTU";  // This must be a value from http://vocabulary.odm2.org/units/
+const char *calculatedVarName = "Turbidity Voltage, uncorrected";  // This must be a value from http://vocabulary.odm2.org/variablename/
+const char *calculatedVarUnit = "volt";  // This must be a value from http://vocabulary.odm2.org/units/
 const char *calculatedVarCode = "Turb";  // A short code for the variable
 const char *calculatedVarUUID = "12345678-abcd-1234-ef00-1234567890ab";  // The (optional) universallly unique identifier
 
 // Finally, Create a calculated variable pointer and return a variable pointer to it
-Variable *TurbidityVariable = new Variable(calculateTurbidity, calculatedVarResolution,
+Variable *TurbidityVoltage = new Variable(calculateTurbidity, calculatedVarResolution,
                                        calculatedVarName, calculatedVarUnit,
                                        calculatedVarCode, calculatedVarUUID);
 
@@ -202,7 +202,7 @@ Variable *variableList[] = {
     new ProcessorStats_Battery(&mcuBoard, "12345678-abcd-1234-ef00-1234567890ab"),
     new MaximDS3231_Temp(&ds3231, "12345678-abcd-1234-ef00-1234567890ab"),
  //   new ExternalVoltage_Volt(&extvolt, "12345678-abcd-1234-ef00-1234567890ab"),
-    TurbidityVariable,
+    TurbidityVoltage,
 };
 
 // Count up the number of pointers in the array
