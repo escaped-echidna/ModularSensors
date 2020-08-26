@@ -1,7 +1,7 @@
 /*****************************************************************************
 
-Reads a decagon CTD sensor and onboard sensors, including an analog input for the
-battery voltage. Values are then uploaded to monitormywatershed.org.
+Reads a decagon CTD sensor and onboard sensors, values are stored in SD
+card and can later be uploaded to monitormywatershed.
 
 
 Modified by Rachel Murray from:
@@ -31,15 +31,15 @@ THIS CODE IS PROVIDED "AS IS" - NO WARRANTY IS GIVEN.
 // The library version this example was written for
 const char *libraryVersion = "0.23.16";
 // The name of this file
-const char *sketchName = "turbidity_ctd.ino";
+const char *sketchName = "umurua_10_min.ino";
 // Logger ID, also becomes the prefix for the name of the data file on SD card
-const char *LoggerID = "okaro v 2";
+const char *LoggerID = "Umurua"; // deploy at Umurua stream location
 // How frequently (in minutes) to log data
-const uint8_t loggingInterval = 15; // set to 2 minutes -rm
+const uint8_t loggingInterval = 1; // set to 2 minutes -rm
 // Your logger's timezone.
 const int8_t timeZone = 12;  // Eastern Standard Time
 // NOTE:  Daylight savings time will not be applied!  Please use standard time!
-float minimum_bat_voltage = 1.0; // defining minimum and moderate battery voltages
+float minimum_bat_voltage = 1.5; // defining minimum and moderate battery voltages
 float moderate_bat_voltage = 1.5; // -rm
 
 // ==========================================================================
@@ -62,16 +62,6 @@ const int8_t sensorPowerPin = 22;  // MCU pin controlling main sensor power (-1 
 const char *mcuBoardVersion = "v0.5b";
 ProcessorStats mcuBoard(mcuBoardVersion);
 
-// =================================================================
-// Turbidity correction formula
-//==========================================
-
-// correction for raw voltage from turbidimeter using formula
-// of the form ax^2 + bx + c
-
-float turbidity_correction_A = 0.0;
-float turbidity_correction_B = 1.0; 
-float turbidity_correction_C = 0.0;
 
 // ==========================================================================
 //    Maxim DS3231 RTC (Real Time Clock)
@@ -97,95 +87,6 @@ const int8_t SDI12Data = 7;  // The SDI12 data pin
 DecagonCTD ctd(*CTDSDI12address, SDI12Power, SDI12Data, CTDNumberReadings);
 
 
-// ==========================================================================
-//    External Voltage via TI ADS1115
-// ==========================================================================
-//#include <sensors/ExternalVoltage.h>
-
-//const int8_t ADSPower = sensorPowerPin;  // Pin to switch power on and off (-1 if unconnected)
-//const int8_t ADSChannel = 3;  // The ADS channel of interest
-//const float dividerGain = 5;  //  Default 1/gain for grove voltage divider is 10x
-//const uint8_t ADSi2c_addr = 0x48;  // The I2C address of the ADS1115 ADC
-//const uint8_t VoltReadsToAvg = 1;  // Only read one sample
-
-// Create an External Voltage sensor object
-//ExternalVoltage extvolt(ADSPower, ADSChannel, dividerGain, ADSi2c_addr, VoltReadsToAvg);
-
-// Create a voltage variable pointer
-// Variable *extvoltV = new ExternalVoltage_Volt(&extvolt, "12345678-abcd-1234-ef00-1234567890ab");
-
-//=============================================================
-// Turbidity sensor as a calculated variable
-//===========================================================
-#include <Adafruit_ADS1015.h>
-
-uint8_t i2cAddressTurbidity = 0x48;
-uint8_t measurementsToAverage = 7;
-uint8_t ADSChannelTurbidity=1;
-
-float calculateTurbidity(void)
-{
-    Adafruit_ADS1115 ads(i2cAddressTurbidity); // Use this for 16-bit version
-   // Adafruit_ADS1015 ads(i2cAddressTurbidity);  // Use this for the 12-bit version
-
-    // place to put the results...
-    float calculatedResult = -9999;  // Always safest to start with a bad value
-    float sensorValue = -9999; // Always safest to start with a bad value
-    float sum_measurements = 0;
-
-    ads.setGain(GAIN_ONE);
-        // Begin ADC
-    ads.begin();
-    
-    for (size_t i = 0; i < measurementsToAverage; i++)
-    {
-        sensorValue = ads.readADC_SingleEnded_V(ADSChannelTurbidity);  // Getting the reading
-        sum_measurements = sum_measurements + sensorValue;
-       
-    }
-
-    //converting to voltage...
-    
-    float voltage = (sum_measurements/measurementsToAverage);
-
-   // Serial.print(F(" Calculating Turbidity... "));
-    
-    // Reading analog 1 pin to get raw value
-    //int sensorValue = analogRead(A2);
-   // Serial.print(F(" Sensor value is ... "));
-   // Serial.println(sensorValue);
-
-   // Serial.print(F(" Voltage is ... "));
-   // Serial.println(voltage);    
-
-    // adjusting turbidity using formula ax^2 + bx + c
-
-    float Ta = turbidity_correction_A;
-    float Tb = turbidity_correction_B;
-    float Tc = turbidity_correction_C;
-
-     if (sensorValue != -9999)  // make sure input is good
-     {
-         calculatedResult = Ta*(voltage*voltage) + Tb*voltage + Tc;
-           // Serial.print(F(" Calculated result is ... "));
-           // Serial.println(calculatedResult);
-     }
-    return calculatedResult;
-}
-
-// Properties of the calculated variable
-const uint8_t calculatedVarResolution = 2;  // The number of digits after the decimal place
-const char *calculatedVarName = "Turbidity Voltage, uncorrected";  // This must be a value from http://vocabulary.odm2.org/variablename/
-const char *calculatedVarUnit = "volt";  // This must be a value from http://vocabulary.odm2.org/units/
-const char *calculatedVarCode = "Turb";  // A short code for the variable
-const char *calculatedVarUUID = "12345678-abcd-1234-ef00-1234567890ab";  // The (optional) universallly unique identifier
-
-// Finally, Create a calculated variable pointer and return a variable pointer to it
-Variable *TurbidityVoltage = new Variable(calculateTurbidity, calculatedVarResolution,
-                                       calculatedVarName, calculatedVarUnit,
-                                       calculatedVarCode, calculatedVarUUID);
-
-
 
 // ==========================================================================
 //    Creating the Variable Array[s] and Filling with Variable Objects
@@ -201,8 +102,6 @@ Variable *variableList[] = {
     new DecagonCTD_Depth(&ctd, "12345678-abcd-1234-ef00-1234567890ab"),
     new ProcessorStats_Battery(&mcuBoard, "12345678-abcd-1234-ef00-1234567890ab"),
     new MaximDS3231_Temp(&ds3231, "12345678-abcd-1234-ef00-1234567890ab"),
- //   new ExternalVoltage_Volt(&extvolt, "12345678-abcd-1234-ef00-1234567890ab"),
-    TurbidityVoltage,
 };
 
 // Count up the number of pointers in the array
@@ -211,17 +110,6 @@ int variableCount = sizeof(variableList) / sizeof(variableList[0]);
 // Create the VariableArray object
 VariableArray varArray(variableCount, variableList);
 
-// ==================================================================
- // Analog battery voltage reading -rm
-// ==================================================================
-// mooched from Conrad's pump controller script -rm
-
-//float getBatteryVoltage(void)
-//{
-//     if (extvolt.sensorValues[0] == -9999) extvolt.update();
-//     return extvolt.sensorValues[0];
- //   return 13.0;
-//}
 
 // ==========================================================================
 //     The Logger Object[s]

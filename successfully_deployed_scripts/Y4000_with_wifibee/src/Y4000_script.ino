@@ -239,7 +239,7 @@ const uint8_t calculatedVarResolution = 2;  // The number of digits after the de
 const char *calculatedVarName = "Turbidity Voltage, uncorrected";  // This must be a value from http://vocabulary.odm2.org/variablename/
 const char *calculatedVarUnit = "volt";  // This must be a value from http://vocabulary.odm2.org/units/
 const char *calculatedVarCode = "Turb";  // A short code for the variable
-const char *calculatedVarUUID = "12345678-abcd-1234-ef00-1234567890ab";  // The (optional) universallly unique identifier
+const char *calculatedVarUUID = "a92b8837-95b4-4a09-9f92-d580fbf8b98e";  // The (optional) universallly unique identifier
 
 // Finally, Create a calculated variable pointer and return a variable pointer to it
 Variable *TurbidityVoltage = new Variable(calculateTurbidity, calculatedVarResolution,
